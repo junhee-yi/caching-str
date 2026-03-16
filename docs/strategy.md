@@ -1,11 +1,11 @@
 # 서비스 상태 공유 전략
 
 Single WebView 구조 전환에 따라 `React Query + Persist`를 어떤 기준으로 적용할지 설명하는 문서입니다.  
-이 문서는 예제 프로젝트의 배경과 설계 원칙을 설명하고, 실제 동작은 루트의 [README.md](/Users/junhee.yi/Desktop/nosync.study/caching-str/README.md)와 코드에서 확인할 수 있도록 구성했습니다.
+이 문서는 예제 프로젝트의 배경과 설계 원칙을 설명하고, 실제 동작은 루트의 [README.md](../README.md)와 코드에서 확인할 수 있도록 구성했습니다.
 
 ## 1. 배경
 
-기존 서비스는 네이티브 앱 안에서 서비스별 WebView Stack 구조로 운영된다고 가정합니다.
+기존 서비스는 네이티브 앱 안에서 서비스별 WebView Stack 구조로 운영되고 있습니다.
 
 - A 서비스와 B 서비스는 서로 다른 WebView에서 실행됨
 - 서비스 이동 시 새로운 WebView가 생성됨
@@ -179,13 +179,13 @@ export const queryKeys = {
 잘못된 예:
 
 ```ts
-["service-access", "admin"]
+["service-access", "admin"];
 ```
 
 올바른 예:
 
 ```ts
-["service-access", "user-01", "admin"]
+["service-access", "user-01", "admin"];
 ```
 
 ## 9. Refetch 정책
@@ -215,10 +215,10 @@ export const queryKeys = {
 
 문서를 읽을 때는 이런 순서가 가장 이해하기 쉽습니다.
 
-1. [README.md](/Users/junhee.yi/Desktop/nosync.study/caching-str/README.md)로 프로젝트 목적과 시나리오 파악
-2. [src/providers/AppProviders.tsx](/Users/junhee.yi/Desktop/nosync.study/caching-str/src/providers/AppProviders.tsx)에서 provider/persist 설정 확인
-3. [src/hooks/useStableQuery.ts](/Users/junhee.yi/Desktop/nosync.study/caching-str/src/hooks/useStableQuery.ts)에서 안정 데이터 정책 확인
-4. [src/hooks/useAppQueries.ts](/Users/junhee.yi/Desktop/nosync.study/caching-str/src/hooks/useAppQueries.ts)에서 실제 쿼리 구성 확인
-5. [src/lib/fakeServer.ts](/Users/junhee.yi/Desktop/nosync.study/caching-str/src/lib/fakeServer.ts)에서 유저별 권한 매트릭스 확인
+1. [README.md](../README.md)로 프로젝트 목적과 시나리오 파악
+2. [src/providers/AppProviders.tsx](../src/providers/AppProviders.tsx)에서 provider/persist 설정 확인
+3. [src/hooks/useStableQuery.ts](../src/hooks/useStableQuery.ts)에서 안정 데이터 정책 확인
+4. [src/hooks/useAppQueries.ts](../src/hooks/useAppQueries.ts)에서 실제 쿼리 구성 확인
+5. [src/lib/fakeServer.ts](../src/lib/fakeServer.ts)에서 유저별 권한 매트릭스 확인
 
 이렇게 보면 “전략”과 “코드”가 어떻게 연결되는지 훨씬 명확하게 보입니다.
