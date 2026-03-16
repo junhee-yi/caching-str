@@ -4,6 +4,14 @@ export type UserProfile = {
   team: string;
 };
 
+export const USER_IDS = {
+  Alex: "user-01",
+  Jack: "user-02",
+  Buck: "user-03",
+} as const;
+
+export type UserId = (typeof USER_IDS)[keyof typeof USER_IDS];
+
 export type DashboardData = {
   notices: string[];
   pendingTasks: number;
@@ -11,7 +19,7 @@ export type DashboardData = {
 };
 
 export const SERVICE_ACCESS_ROLE = {
-  VIEWR: "viewer",
+  VIEWER: "viewer",
   EDITOR: "editor",
 } as const;
 

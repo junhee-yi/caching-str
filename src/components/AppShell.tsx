@@ -4,6 +4,8 @@ import type { PropsWithChildren } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import type { UserId } from "@/lib/types";
 
 const isActive = (pathname: string, href: string) => {
   if (href === "/") {
@@ -17,6 +19,7 @@ export const AppShell = ({ children }: PropsWithChildren) => {
   const pathname = usePathname();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { currentUserId, setCurrentUser, users } = useCurrentUser();
 
   const handleLogout = () => {
     queryClient.clear();
@@ -36,6 +39,24 @@ export const AppShell = ({ children }: PropsWithChildren) => {
             localStorage persist는 boot cache로만 활용하는 흐름을 화면에서 바로
             확인할 수 있습니다.
           </p>
+          <div className="user-switcher">
+            <label htmlFor="user-select">현재 유저</label>
+            <select
+              id="user-select"
+              value={currentUserId}
+              onChange={(event) => {
+                queryClient.clear();
+                setCurrentUser(event.target.value as UserId);
+                router.refresh();
+              }}
+            >
+              {users.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.name} ({user.team})
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
         <button className="ghost-button" onClick={handleLogout}>
           Logout / Cache Clear
@@ -62,7 +83,7 @@ export const AppShell = ({ children }: PropsWithChildren) => {
           className={isActive(pathname, "/services/admin") ? "active" : ""}
           href="/services/admin"
         >
-          Admin(403)
+          Admin
         </Link>
       </nav>
 

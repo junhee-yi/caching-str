@@ -86,6 +86,27 @@ pre {
   color: #17315d;
 }
 
+.user-switcher {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.user-switcher label {
+  color: #49607f;
+  font-size: 0.95rem;
+}
+
+.user-switcher select {
+  border: 1px solid rgba(23, 49, 93, 0.15);
+  border-radius: 999px;
+  padding: 0.7rem 1rem;
+  background: white;
+  color: #17315d;
+  font: inherit;
+}
+
 .tabs {
   display: flex;
   flex-wrap: wrap;

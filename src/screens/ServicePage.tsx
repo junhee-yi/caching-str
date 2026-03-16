@@ -2,20 +2,23 @@
 
 import { QueryStateCard } from "@/components/QueryStateCard";
 import { useServiceAccess } from "@/hooks/useAppQueries";
-import { ServiceType } from "@/lib/types";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+
+import type { ServiceType } from "@/lib/types";
 
 type ServicePageProps = {
   serviceId: ServiceType;
 };
 
 export function ServicePage({ serviceId }: ServicePageProps) {
+  const { currentUserId } = useCurrentUser();
   const accessQuery = useServiceAccess(serviceId);
 
   return (
     <QueryStateCard title={`Service Access: ${serviceId}`} persist="no">
       <p className="caption">
-        Persist된 값만으로 권한을 판단하지 않고, route handler를 호출해 매번
-        검증하는 예시입니다.
+        현재 유저는 {currentUserId}이며, persist된 값만으로 권한을 판단하지 않고
+        route handler를 호출해 매번 검증합니다.
       </p>
 
       {accessQuery.isPending && <p>Checking access...</p>}

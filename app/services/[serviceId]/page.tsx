@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/AppShell";
-import { ServiceType } from "@/lib/types";
+import type { ServiceType } from "@/lib/types";
 import { ServicePage } from "@/screens/ServicePage";
 
 export default async function ServiceRoute({

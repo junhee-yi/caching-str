@@ -6,6 +6,7 @@ import {
   type Persister,
 } from "@tanstack/react-query-persist-client";
 import { QueryClient, type Query } from "@tanstack/react-query";
+import { CurrentUserProvider } from "@/providers/CurrentUserProvider";
 
 const PERSIST_KEY = "RQ_PERSIST_CACHE";
 const BUSTER = "build-2026-03";
@@ -65,7 +66,7 @@ export function AppProviders({ children }: PropsWithChildren) {
         },
       }}
     >
-      {children}
+      <CurrentUserProvider>{children}</CurrentUserProvider>
     </PersistQueryClientProvider>
   );
 }

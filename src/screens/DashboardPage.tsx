@@ -6,9 +6,11 @@ import {
   useLiveStats,
   useUserProfile,
 } from "@/hooks/useAppQueries";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { PERSIST_TYPE } from "@/lib/types";
 
 export const DashboardPage = () => {
+  const { currentUserId } = useCurrentUser();
   const profileQuery = useUserProfile();
   const dashboardQuery = useDashboard(profileQuery.data?.id);
   const liveStatsQuery = useLiveStats();
@@ -20,7 +22,10 @@ export const DashboardPage = () => {
           {profileQuery.isPending ? (
             <p>Loading profile...</p>
           ) : (
-            <pre>{JSON.stringify(profileQuery.data, null, 2)}</pre>
+            <>
+              <p className="caption">선택된 세션 유저: {currentUserId}</p>
+              <pre>{JSON.stringify(profileQuery.data, null, 2)}</pre>
+            </>
           )}
         </QueryStateCard>
 
