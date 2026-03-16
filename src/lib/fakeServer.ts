@@ -17,17 +17,17 @@ const currentUserKey = "demo-current-user";
 const usersById: Record<UserId, UserProfile> = {
   [USER_IDS.Alex]: {
     id: USER_IDS.Alex,
-    name: USER_IDS.Alex,
+    name: "Alex",
     team: "Platform FE",
   },
   [USER_IDS.Buck]: {
     id: USER_IDS.Buck,
-    name: USER_IDS.Buck,
+    name: "Buck",
     team: "Growth FE",
   },
   [USER_IDS.Jack]: {
     id: USER_IDS.Jack,
-    name: USER_IDS.Jack,
+    name: "Jack",
     team: "Admin Ops",
   },
 };

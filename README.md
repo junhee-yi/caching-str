@@ -1,334 +1,127 @@
-# 서비스 상태 공유 전략
+# React Query Persist 캐싱 전략 예제
 
-**Single WebView 구조 전환에 따른 React Query + Persist 캐싱 전략**  
-**작성일**: 2026년 3월  
-**대상**: 프론트엔드 개발자 (경력 5년 이상, React Query Persist 경험 없음)  
-**목적**: Single WebView + SPA Routing 환경에서 **안전하고 빠른** 상태 공유 및 캐싱 전략 정의
+Single WebView + SPA Routing 환경을 가정하고, `React Query + Persist` 전략을 어떻게 적용할 수 있는지 보여주는 Next.js 예제 프로젝트입니다.
 
----
+이 저장소는 두 가지를 함께 보여주기 위해 만들어졌습니다.
 
-## 1. 배경
+- 전략 문서로 설계 의도를 설명하기
+- 실제 예제 코드로 그 전략이 어떻게 적용되는지 확인하기
 
-기존 서비스는 네이티브 앱 내 **서비스 단위 WebView Stack** 구조로 운영되었습니다.  
-A 서비스와 B 서비스는 각각 독립적인 WebView에서 실행되었으며,  
-서비스 이동 시 **새로운 WebView가 생성**되고 기존 WebView는 background로 유지되었습니다.
+전략 자체에 대한 자세한 설명은 [docs/strategy.md](/Users/junhee.yi/Desktop/nosync.study/caching-str/docs/strategy.md)에서 볼 수 있습니다.
 
-이로 인해:
+## 이 프로젝트가 보여주는 것
 
-- JS/React/React Query/Browser Storage/Memory가 완전히 분리
-- 서비스 간 상태 공유 불가능
-- react-query 캐싱 전략이 사실상 무의미 → **no-store** 전략만 사용
+- `Route Handler = Truth`
+- `React Query = Runtime Cache`
+- `Persist = Boot Cache`
+- 모든 데이터를 persist하지 않고 `meta.persist` 기준으로 선택적으로 저장하는 방식
+- 권한 판단은 persist된 캐시가 아니라 route handler 호출 결과를 기준으로 해야 한다는 원칙
+- 같은 서비스라도 유저가 바뀌면 접근 결과가 달라지는 시나리오
 
-**리뉴얼 후 구조**  
-**서비스 이동 = Route Transition**  
-Native App → Single WebView (Shell) → SPA Routing
+## 주요 시나리오
 
-이 변화로 **런타임 공유**와 **클라이언트 캐싱**이 현실적으로 가능해졌습니다.
+이 예제에서는 상단에서 현재 유저를 바꿀 수 있습니다.
 
----
+- `Alex`
+  - `billing`: 접근 가능
+  - `support`: 접근 가능
+  - `admin`: 접근 불가
+- `Buck`
+  - `billing`: 접근 불가
+  - `support`: 접근 가능
+  - `admin`: 접근 불가
+- `Jack`
+  - `billing`: 접근 가능
+  - `support`: 접근 가능
+  - `admin`: 접근 가능
 
-## 2. 기존 구조의 한계 (요약)
+이렇게 구성한 이유는 `admin`을 단순히 고정 `allowed: false`로 두는 대신, 같은 서비스에 대해 유저 컨텍스트가 바뀌면 권한 결과도 바뀌는 흐름을 보여주기 위해서입니다.
 
-| 항목        | 기존 WebView Stack | 문제점                |
-| ----------- | ------------------ | --------------------- |
-| 런타임      | 완전 분리          | 상태 공유 불가        |
-| 이동 방식   | 새 WebView 생성    | React Query 캐시 무효 |
-| 데이터 전략 | no-store           | 매번 API 호출 + 로딩  |
+## 화면에서 확인할 수 있는 포인트
 
----
+### 1. Dashboard
 
-## 3. 전략 목표
+- `user profile`: persist 대상
+- `dashboard`: persist 대상
+- `live stats`: persist 제외
 
-1. 초기 렌더링 UX 개선 (스피너 최소화)
-2. 불필요한 API 요청 감소
-3. 네트워크 트래픽 감소
-4. 서비스 간 상태 공유 실현
+persist 대상 데이터는 앱 재진입 시 boot cache로 빠르게 렌더링될 수 있고, 이후 background refetch로 최신화됩니다.
 
----
+### 2. Service Access
 
-## 4. 상태 관리 계층 구조
+- `billing`
+- `support`
+- `admin`
 
-```
-Route Handler (Truth)
-↓
-React Query (Runtime Cache)
-↓
-Persist Layer (Boot Cache)
-```
+서비스 접근 여부는 현재 유저와 서비스 조합으로 조회됩니다.  
+즉, query key도 단순히 `serviceId`만 쓰지 않고 `userId + serviceId` 조합을 사용합니다.
 
-- **Route Handler**: 서버 상태의 **단일 진실 공급원** (항상 최신)
-- **React Query**: 앱 실행 중 캐시 + refetch 관리
-- **Persist Layer**: 앱 재진입 시 즉시 렌더링을 위한 Boot Cache
+## 실행 방법
 
----
-
-## 5. 상세 설계 (신규 핵심 섹션)
-
-### 5.1 Cache Key Strategy & Factory
-
-모든 queryKey는 **중앙 집중 관리**합니다.
-
-```tsx
-// lib/queryKeys.ts
-export const queryKeys = {
-  serviceAccess: (serviceId: string) => ["service-access", serviceId] as const,
-  userProfile: () => ["user", "profile"] as const,
-  dashboard: (userId: string) => ["dashboard", userId] as const,
-} as const;
+```bash
+npm install
+npm run dev
 ```
 
-### 5.2 Invalidation Patterns
+그 뒤 브라우저에서 [http://localhost:3000](http://localhost:3000) 을 열면 됩니다.
 
-```tsx
-// mutation 예시
-onSuccess: (data) => {
-  // 1. 특정 키 무효화
-  queryClient.invalidateQueries({
-    queryKey: queryKeys.serviceAccess(serviceId)
-  });
+## 프로젝트 구조
 
-  // 2. 태그 기반 무효화 (v5 추천)
-  queryClient.invalidateQueries({
-    predicate: (query) => query.queryKey[0] === 'user'
-  });
-},
+```text
+app/
+  layout.tsx
+  page.tsx
+  services/[serviceId]/page.tsx
+
+src/
+  components/
+    AppShell.tsx
+    QueryStateCard.tsx
+  hooks/
+    useAppQueries.ts
+    useCurrentUser.ts
+    useStableQuery.ts
+  lib/
+    fakeServer.ts
+    queryKeys.ts
+    types.ts
+  providers/
+    AppProviders.tsx
+  screens/
+    DashboardPage.tsx
+    ServicePage.tsx
 ```
 
-글로벌 기본 설정 (QueryClient 생성 시):
+## 코드에서 먼저 보면 좋은 파일
 
-```tsx
-defaultOptions: {
-  queries: {
-    refetchOnWindowFocus: 'always',
-    refetchOnReconnect: true,
-    refetchOnMount: true,
-  },
-}
-```
+- [src/providers/AppProviders.tsx](/Users/junhee.yi/Desktop/nosync.study/caching-str/src/providers/AppProviders.tsx)
+  - React Query와 persist 설정이 들어 있습니다.
+- [src/hooks/useStableQuery.ts](/Users/junhee.yi/Desktop/nosync.study/caching-str/src/hooks/useStableQuery.ts)
+  - 안정 데이터용 query wrapper입니다.
+- [src/hooks/useAppQueries.ts](/Users/junhee.yi/Desktop/nosync.study/caching-str/src/hooks/useAppQueries.ts)
+  - 실제 예제에서 사용하는 query hook이 모여 있습니다.
+- [src/lib/queryKeys.ts](/Users/junhee.yi/Desktop/nosync.study/caching-str/src/lib/queryKeys.ts)
+  - query key factory가 정의되어 있습니다.
+- [src/lib/fakeServer.ts](/Users/junhee.yi/Desktop/nosync.study/caching-str/src/lib/fakeServer.ts)
+  - mock route handler 역할을 합니다.
 
-### 5.3 Persist Configuration
+## 이 README와 전략 문서의 차이
 
-```tsx
-const Providers = ({ children }: PropsWithChildren) => {
-  const [{ queryClient, persister }] = useState(() => ({
-    queryClient: new QueryClient({
-      defaultOptions: {
-        queries: {
-          staleTime: 60 * 1000,
-          gcTime: 1000 * 60 * 60 * 24, // 24시간 <로컬스토리지에 저장된 정보가 stale 되는 시간 설정>
-          refetchOnWindowFocus: "always",
-          refetchOnReconnect: true,
-          refetchOnMount: true,
-        },
-      },
-    }),
-    persister: createAsyncStoragePersister({
-      storage:
-        typeof window !== "undefined" ? window.localStorage : (null as any),
-      key: "RQ_PERSIST_CACHE",
-    }),
-  }));
+이 README는 프로젝트를 빠르게 이해하고 실행하기 위한 문서입니다.
 
-  // ==================== 선택적 Persist 핵심 로직 ====================
-  const shouldPersistQuery = (query: Query) => {
-    const persistFlag = query.meta?.persist;
+- 무엇을 보여주는 프로젝트인지
+- 어떻게 실행하는지
+- 어디를 보면 되는지
+- 어떤 시나리오를 검증할 수 있는지
 
-    // 명시적으로 true/false 설정된 경우 그 값을 존중
-    if (persistFlag === true) return !query.isDisabled();
-    if (persistFlag === false) return false;
+반면 [docs/strategy.md](/Users/junhee.yi/Desktop/nosync.study/caching-str/docs/strategy.md)는 왜 이런 구조를 택했는지 설명하는 문서입니다.
 
-    // meta를 안 붙인 쿼리는 기본적으로 persist 안 함 (안전 우선)
-    return false;
-  };
-  // ============================================================
+- 왜 Single WebView 전환에서 캐싱 전략이 다시 중요해졌는지
+- 왜 persist를 선택적으로만 써야 하는지
+- 왜 권한 판단을 persisted cache에 의존하면 안 되는지
+- 어떤 트레이드오프를 감수하는지
 
-  return (
-    <PersistQueryClientProvider
-      client={queryClient}
-      persistOptions={{
-        persister,
-        maxAge: 1000 * 60 * 60 * 24 * 7, // 7일 (이 부분은 정책에 맞게 수정)
-        buster: import.meta.env.NEXT_PUBLIC_BUILD_HASH, // ← 배포 시 자동 무효화 (필수!)
-        dehydrateOptions: {
-          shouldDehydrateQuery: shouldPersistQuery,
-        },
-      }}
-    >
-      <UnauthorizedHandlerBridge />
-      {children}
-    </PersistQueryClientProvider>
-  );
-};
+## 참고
 
-export default Providers;
-```
-
-#### 5.3.1 refetchOnMount 정책
-
-모든 쿼리는 `refetchOnMount: true`를 기본으로 유지합니다.  
-Persist 캐시 히트는 초기 렌더링 속도만 제공하고,  
-실제 데이터 최신화는 항상 background에서 수행합니다.
-
-업데이트 거의 없는 데이터 (service-access, user-profile 등) → `useStableQuery 사용 (persist + 긴 staleTime)`
-자주 변하는 데이터 → `meta.persist: false + staleTime: 0`
-
-```ts
-//업데이트 거의 없는 부분만 hit 활용
-
-export const useStableQuery = <T = unknown>(
-  options: UseQueryOptions<T> & { meta?: { persist?: boolean } },
-) => {
-  return useQuery({
-    ...options,
-    refetchOnMount: true, // 항상 background refetch
-    staleTime: options.staleTime ?? 1000 * 60 * 10, // 10분 (안정 데이터용)
-    meta: { ...options.meta, persist: true }, // 강제 persist
-  });
-};
-```
-
-```tsx
-// 안정 데이터 (업데이트 거의 없음)
-const { data: access } = useStableQuery({
-  queryKey: queryKeys.serviceAccess(serviceId),
-  queryFn: fetchServiceAccess,
-});
-
-// 자주 변하는 데이터 (hit 거의 안 쓰고 refetch 위주)
-const { data: realtimeData } = useQuery({
-  queryKey: queryKeys.liveStats(),
-  queryFn: fetchLiveStats,
-  meta: { persist: false },
-  staleTime: 0, // 항상 fresh
-});
-
-// 캐싱 사용 시
-const { data: realtimeData } = useQuery({
-  queryKey: queryKeys.lists(),
-  queryFn: fetchLists,
-  meta: { persist: true },
-});
-```
-
-### 5.4 인증/권한 처리 원칙 & Custom Hook (가장 중요)
-
-절대 Persist된 캐시만으로 권한 판단 금지!
-
-```tsx
-// hooks/useServiceAccess.ts
-export const useServiceAccess = (serviceId: string) => {
-  return useQuery({
-    queryKey: queryKeys.serviceAccess(serviceId),
-    queryFn: () => fetchServiceAccess(serviceId), // Route Handler만 호출
-    staleTime: 1000 * 60 * 10,
-    gcTime: 1000 * 60 * 60,
-    // Route Handler 강제 호출 보장
-  });
-};
-```
-
-사용 예시
-
-```tsx
-const { data: access } = useServiceAccess("service-a");
-// access가 undefined면 Route Handler에서 이미 403 처리됨
-```
-
-### 5.5 WebView Lifecycle 대응
-
-onResume (foreground 복귀): queryClient.invalidateQueries({ predicate: () => true }) 또는 selective refetch
-onPause (background): 불필요한 refetch 중지
-Native Bridge와 연동하여 WebView kill 시 persister.removeClient() 호출
-
-### 5.6 Selective Persistence 전략
-
-모든 쿼리를 persist하지 않고, 필요한 쿼리만 선택적으로 persist합니다.
-
-- 정책
-
-```
-meta.persist: true → persist 대상
-meta.persist: false → persist 제외
-meta 미설정 → 기본적으로 persist 안 함 (안전 최우선)
-```
-
-- 왜 이 방식인가?
-
-localStorage 오염 방지  
-민감 데이터(인증, 결제) 보호  
-개발자가 의도적으로 결정하게 함
-
-### 6. 데이터 흐름
-
-최초 진입
-
-```
-Browser Storage (Persist)
-↓
-Persisted Cache 복원 (buster 체크)
-↓
-React Query Cache 초기화
-↓
-UI 즉시 렌더링 (스피너 최소)
-↓
-Background refetch (Route Handler)
-```
-
-페이지 이동 (Route Change)
-
-```
-Route Change
-       ↓
-React Query Cache 확인
-       ↓
-Cache Hit → 즉시 렌더링
-Cache Miss → Route Handler 호출
-```
-
-### 7. 인증 데이터 처리 원칙
-
-Browser Storage에 저장된 데이터는 UI 힌트 용도로만 사용
-모든 권한 판단은 Route Handler에서 수행
-Logout 시 반드시 아래 절차 실행 (8.2 참조)
-
-### 8. 리스크 완화 전략 (운영 안정성 핵심)
-
-#### 8.1 Cache Versioning & Migration
-
-- buster: PUBLIC_NEXT_BUILD_HASH 사용 → 배포 시 자동 전체 캐시 무효화
-- 스키마 변경 시 별도 migration 함수 작성 가능
-
-#### 8.2 Logout / Cache Clear 전략
-
-```tsx
-const handleLogout = async () => {
-  await queryClient.clear();
-  await persister.removeClient();
-  localStorage.clear();
-  sessionStorage.clear();
-  // Native Bridge 호출 (WebView 재시작 권장)
-};
-```
-
-#### 8.3 Multi-tab / Multi-session 대응
-
-- localStorage 사용 + buster로 동기화
-- 필요 시 focus 이벤트에서 queryClient.invalidateQueries() 호출
-
-### 9. 기대 효과
-
-- 초기 렌더링 UX 개선
-- Boot Cache + Persist로 스피너는 최초 진입 시에만 발생
-- 네트워크 트래픽 감소
-- 서비스 간 상태 공유 완전 실현
-
-### 10. 핵심 원칙
-
-```
-    textRoute Handler = Truth
-    React Query = Runtime Cache
-    Persist = Boot Cache
-```
-
-    역할을 철저히 분리함으로써
-    데이터 정확성 + 성능 + 안정성을 동시에 확보합니다.
+이 프로젝트는 실제 API 대신 mock route handler를 사용합니다.  
+목표는 서버 통신 자체보다 캐싱 계층과 권한 검증 원칙을 이해하기 쉽게 보여주는 데 있습니다.
