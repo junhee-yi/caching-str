@@ -98,10 +98,14 @@ src/
   - 실제 예제에서 사용하는 query hook이 모여 있습니다.
 - [src/lib/queryKeys.ts](src/lib/queryKeys.ts)
   - query key factory가 정의되어 있습니다.
+- [app/api/services/[serviceId]/access/route.ts](app/api/services/[serviceId]/access/route.ts)
+  - 권한 판단을 수행하는 실제 Next Route Handler입니다.
 - [src/lib/fakeServer.ts](src/lib/fakeServer.ts)
-  - mock route handler 역할을 합니다.
+  - user profile, dashboard, live stats용 mock 데이터 fetch가 들어 있습니다.
+- [src/examples/badServiceAccess.ts](src/examples/badServiceAccess.ts)
+  - 규칙을 어겼을 때 어떤 문제가 생기는지 보여주는 bad example입니다.
 
 ## 참고
 
-이 프로젝트는 실제 API 대신 mock route handler를 사용합니다.  
+이 프로젝트는 권한 검증에는 실제 Next Route Handler를 사용하고, 나머지 예시 데이터는 mock 함수로 단순화했습니다.  
 목표는 서버 통신 자체보다 캐싱 계층과 권한 검증 원칙을 이해하기 쉽게 보여주는 데 있습니다.

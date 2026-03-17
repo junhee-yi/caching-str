@@ -6,22 +6,22 @@ import {
   type Persister,
 } from "@tanstack/react-query-persist-client";
 import { QueryClient, type Query } from "@tanstack/react-query";
+import { browserStorage } from "@/lib/browserStorage";
 import { CurrentUserProvider } from "@/providers/CurrentUserProvider";
 
 const PERSIST_KEY = "RQ_PERSIST_CACHE";
-const BUSTER = "build-2026-03";
+const BUSTER = "build-2026-03"; // env로 세팅해야하는 값
 
 function createLocalStoragePersister(): Persister {
   return {
     persistClient: async (client) => {
-      localStorage.setItem(PERSIST_KEY, JSON.stringify(client));
+      browserStorage.setJSON(PERSIST_KEY, client);
     },
     restoreClient: async () => {
-      const cached = localStorage.getItem(PERSIST_KEY);
-      return cached ? JSON.parse(cached) : undefined;
+      return browserStorage.getJSON(PERSIST_KEY);
     },
     removeClient: async () => {
-      localStorage.removeItem(PERSIST_KEY);
+      browserStorage.remove(PERSIST_KEY);
     },
   };
 }

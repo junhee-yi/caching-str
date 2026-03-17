@@ -1,5 +1,5 @@
 export type UserProfile = {
-  id: string;
+  id: UserId;
   name: string;
   team: string;
 };

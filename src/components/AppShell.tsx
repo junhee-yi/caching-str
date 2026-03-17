@@ -5,7 +5,9 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { browserStorage } from "@/lib/browserStorage";
 import type { UserId } from "@/lib/types";
+import { dashboardByUser, usersById } from "@/lib/demoData";
 
 const isActive = (pathname: string, href: string) => {
   if (href === "/") {
@@ -23,7 +25,7 @@ export const AppShell = ({ children }: PropsWithChildren) => {
 
   const handleLogout = () => {
     queryClient.clear();
-    localStorage.clear();
+    browserStorage.clear();
     router.push("/");
     router.refresh();
   };
@@ -33,11 +35,11 @@ export const AppShell = ({ children }: PropsWithChildren) => {
       <header className="hero">
         <div>
           <p className="eyebrow">Single WebView + SPA Routing</p>
-          <h1>React Query Persist 예시 프로젝트</h1>
+          <h2>React Query Persist 예시 프로젝트</h2>
           <p className="hero-copy">
             Route Handler를 truth로 두고, React Query는 runtime cache,
-            localStorage persist는 boot cache로만 활용하는 흐름을 화면에서 바로
-            확인할 수 있습니다.
+            browserStorage persist는 boot cache로만 활용하는 흐름을 화면에서
+            바로 확인할 수 있습니다.
           </p>
           <div className="user-switcher">
             <label htmlFor="user-select">현재 유저</label>
@@ -56,6 +58,12 @@ export const AppShell = ({ children }: PropsWithChildren) => {
                 </option>
               ))}
             </select>
+            <label htmlFor="user-select">접근 권한</label>
+            <div>
+              {dashboardByUser[currentUserId].notices.map((noti) => (
+                <div>{noti}</div>
+              ))}
+            </div>
           </div>
         </div>
         <button className="ghost-button" onClick={handleLogout}>

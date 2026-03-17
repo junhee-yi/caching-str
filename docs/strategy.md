@@ -75,7 +75,7 @@ Persist = Boot Cache
 
 persist는 편리하지만 무분별하게 사용하면 문제가 생깁니다.
 
-- localStorage 오염
+- 브라우저 저장소 오염
 - 민감 데이터 저장 위험
 - 오래된 데이터가 과하게 남는 문제
 - 권한이나 인증 판단을 캐시에 의존하게 되는 실수
@@ -141,6 +141,8 @@ meta 미설정         -> 기본 persist 제외
 그래서 권한 관련 데이터는 route handler 호출 결과를 기준으로 판단해야 합니다.
 
 이 예제에서도 `service access`는 persist 대상이 아닙니다.
+
+실제 코드는 [app/api/services/[serviceId]/access/route.ts](../app/api/services/[serviceId]/access/route.ts)에서 권한을 판별하고, 클라이언트는 그 응답만 소비합니다.
 
 ## 7. 왜 유저 전환 시나리오가 중요한가
 
@@ -219,6 +221,7 @@ export const queryKeys = {
 2. [src/providers/AppProviders.tsx](../src/providers/AppProviders.tsx)에서 provider/persist 설정 확인
 3. [src/hooks/useStableQuery.ts](../src/hooks/useStableQuery.ts)에서 안정 데이터 정책 확인
 4. [src/hooks/useAppQueries.ts](../src/hooks/useAppQueries.ts)에서 실제 쿼리 구성 확인
-5. [src/lib/fakeServer.ts](../src/lib/fakeServer.ts)에서 유저별 권한 매트릭스 확인
+5. [app/api/services/[serviceId]/access/route.ts](../app/api/services/[serviceId]/access/route.ts)에서 서버 권한 검증 확인
+6. [src/examples/badServiceAccess.ts](../src/examples/badServiceAccess.ts)에서 나쁜 예시와 왜 위험한지 확인
 
 이렇게 보면 “전략”과 “코드”가 어떻게 연결되는지 훨씬 명확하게 보입니다.
